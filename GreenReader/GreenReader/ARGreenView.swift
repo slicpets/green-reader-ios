@@ -30,7 +30,9 @@ struct ARGreenView: UIViewRepresentable {
 
     class Coordinator: NSObject {
         weak var arView: ARView?
-        var tapCount = 0
+
+        var ballPosition: SIMD3<Float>?
+        var holePosition: SIMD3<Float>?
 
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard let arView = arView else { return }
@@ -51,12 +53,31 @@ struct ARGreenView: UIViewRepresentable {
                 result.worldTransform.columns.3.z
             )
 
-            tapCount += 1
+            if ballPosition == nil {
+                ballPosition = position
+                placeSphere(at: position, color: .white, radius: 0.035, in: arView)
+                print("Ball placed")
+            } else if holePosition == nil {
+                holePosition = position
+                placeSphere(at: position, color: .red, radius: 0.05, in: arView)
+                calculateReading()
+            }
+        }
 
-            let color: UIColor = tapCount == 1 ? .white : .red
-            let radius: Float = tapCount == 1 ? 0.035 : 0.05
+        func calculateReading() {
+            guard let ball = ballPosition, let hole = holePosition else { return }
 
-            placeSphere(at: position, color: color, radius: radius, in: arView)
+            let distance = GreenReadingModel.distanceFeet(from: ball, to: hole)
+            let slope = GreenReadingModel.slopePercent(from: ball, to: hole)
+            let breakEstimate = PuttPhysics.estimateBreakInches(
+                distanceFeet: distance,
+                slopePercent: slope,
+                stimp: 10
+            )
+
+            print("Distance: \(distance) feet")
+            print("Slope: \(slope)%")
+            print("Estimated break: \(breakEstimate) inches")
         }
 
         func placeSphere(
@@ -71,7 +92,6 @@ struct ARGreenView: UIViewRepresentable {
 
             let anchor = AnchorEntity(world: position)
             anchor.addChild(entity)
-
             arView.scene.addAnchor(anchor)
         }
     }
