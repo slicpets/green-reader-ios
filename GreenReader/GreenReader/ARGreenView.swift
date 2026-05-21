@@ -3,9 +3,10 @@ import RealityKit
 import ARKit
 
 struct ARGreenView: UIViewRepresentable {
+    @Binding var result: ReadingResult?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(result: $result)
     }
 
     func makeUIView(context: Context) -> ARView {
@@ -30,16 +31,21 @@ struct ARGreenView: UIViewRepresentable {
 
     class Coordinator: NSObject {
         weak var arView: ARView?
+        var result: Binding<ReadingResult?>
 
         var ballPosition: SIMD3<Float>?
         var holePosition: SIMD3<Float>?
+
+        init(result: Binding<ReadingResult?>) {
+            self.result = result
+        }
 
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard let arView = arView else { return }
 
             let location = gesture.location(in: arView)
 
-            guard let result = arView.raycast(
+            guard let hit = arView.raycast(
                 from: location,
                 allowing: .estimatedPlane,
                 alignment: .horizontal
@@ -48,15 +54,14 @@ struct ARGreenView: UIViewRepresentable {
             }
 
             let position = SIMD3<Float>(
-                result.worldTransform.columns.3.x,
-                result.worldTransform.columns.3.y,
-                result.worldTransform.columns.3.z
+                hit.worldTransform.columns.3.x,
+                hit.worldTransform.columns.3.y,
+                hit.worldTransform.columns.3.z
             )
 
             if ballPosition == nil {
                 ballPosition = position
                 placeSphere(at: position, color: .white, radius: 0.035, in: arView)
-                print("Ball placed")
             } else if holePosition == nil {
                 holePosition = position
                 placeSphere(at: position, color: .red, radius: 0.05, in: arView)
@@ -75,9 +80,11 @@ struct ARGreenView: UIViewRepresentable {
                 stimp: 10
             )
 
-            print("Distance: \(distance) feet")
-            print("Slope: \(slope)%")
-            print("Estimated break: \(breakEstimate) inches")
+            result.wrappedValue = ReadingResult(
+                distanceFeet: distance,
+                slopePercent: slope,
+                breakInches: breakEstimate
+            )
         }
 
         func placeSphere(
