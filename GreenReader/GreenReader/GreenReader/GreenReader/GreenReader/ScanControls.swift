@@ -14,6 +14,10 @@ struct ScanControls: View {
                     Text("Distance: \(result.distanceFeet, specifier: "%.1f") ft")
                     Text("Slope: \(result.slopePercent, specifier: "%.2f")%")
                     Text("Break: \(result.breakInches, specifier: "%.1f") in")
+
+                    Text(AimRecommendation.text(for: result.breakInches))
+                        .font(.title3)
+                        .bold()
                 }
 
                 Button("Reset Scan") {
