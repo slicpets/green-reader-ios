@@ -4,7 +4,7 @@ import ARKit
 
 struct ARGreenView: UIViewRepresentable {
     @Binding var result: ReadingResult?
-
+let stimp: Float
     func makeCoordinator() -> Coordinator {
         Coordinator(result: $result)
     }
@@ -77,7 +77,7 @@ struct ARGreenView: UIViewRepresentable {
             let breakEstimate = PuttPhysics.estimateBreakInches(
                 distanceFeet: distance,
                 slopePercent: slope,
-                stimp: 10
+                stimp: stimp
             )
 
             result.wrappedValue = ReadingResult(
